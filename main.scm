@@ -1,3 +1,6 @@
+(add-to-load-path "/usr/local/share/guile/site/3.0/")
+;; (add-to-load-path "/usr/local/share/guile/site/3.0/fibers/")
+
 (use-modules (web request)
              (web response)
              (web uri)

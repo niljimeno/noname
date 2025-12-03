@@ -1,9 +1,12 @@
 FROM alpine:3.18
-RUN apk add --no-cache guile yt-dlp git make
+RUN apk add guile guile-dev yt-dlp git make autoconf automake
+RUN apk add libtool libgcrypt autoconf-archive pkgconf build-base
+RUN apk add texinfo gmp-dev
+# gettext
 RUN git clone https://codeberg.org/guile/fibers /tmp/fibers
-RUN cp /tmp/fibers/fibers.scm /usr/share/guile/3.0/
-RUN cp -r /tmp/fibers/fibers /usr/share/guile/3.0/fibers
-RUN mkdir -p /var/www/music-player
+RUN mkdir -p /usr/local/share/guile/site/3.0/
+
+RUN cd /tmp/fibers && ./autogen.sh && ./configure && make && make install
 
 WORKDIR /var/www/music-player
 
