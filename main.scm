@@ -83,8 +83,6 @@
 (define (setup)
   (run-command (command-append "mkdir" "-p" "target")))
 
-(define main (
-  (setup)
-  (run-fibers
-   (lambda ()
-     (run-server handler)))))
+(define main
+  ((setup)
+   (run-server handler #:host "0.0.0.0" #:port 8080)))
