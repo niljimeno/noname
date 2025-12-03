@@ -24,10 +24,10 @@
       (route-search-songs request))))))
 
 (define (route-download-song request)
-  (let* ((yt-url (string-append
+  (let* ((id (get-param request "url"))
+         (yt-url (string-append
                   "https://www.youtube.com/watch?v="
-                  (get-param request "url")))
-         (id (number->string (random 999)))
+                  id))
          (filename (string-append id ".opus"))
          (path (string-append "target/" id)))
     (yt-dlp-download yt-url path)
