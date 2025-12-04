@@ -18,30 +18,39 @@
 (define (handler request body)
   (let ((url (uri-path (request-uri request))))
     (let ((main-section (first (url-sections url))))
-    (cond
-     ((equal? main-section "song")
-      (route-download-song body))
-     ((equal? main-section "search")
-      (route-search-songs body))
-     (else (route-not-found))))))
+      (cond
+       ((equal? main-section "song")
+        (route-download-song body))
+       ((equal? main-section "search")
+        (route-search-songs body))
+       (else (route-not-found))))))
 
+
+(define (name-from-song-url url)
+  (number->string (random 999)))
+
+(define (get-song-data url)
+  (let ((name (name-from-song-url url)))
+    `((name . "alex-putero")
+      (filename . ,(string-append name ".opus"))
+      (outpath . ,(string-append "target/" name))
+      (filepath . ,(string-append "target/" name ".opus"))
+      (url . ,url))))
 
 (define (route-download-song body)
-  (let* ((id (get-json-value "id" body))
-         (filename (string-append id ".opus"))
-         (path (string-append "target/" id))
-         (yt-url (string-append
-                  "https://www.youtube.com/watch?v="
-                  id)))
-    (yt-dlp-download yt-url path)
-
-    (let ((content (call-with-input-file
-                    (string-append "target/" filename)
-                    get-bytevector-all)))
-      (values (build-response
-               #:headers `((content-type . (application/octet-stream))
-                           (content-disposition . (attachment (filename . ,filename)))))
-              content))))
+  (let ((song-url (get-json-value "url" body)))
+    (let ((song-data (get-song-data song-url)))
+      (clean-existing (cdr (assoc 'filepath song-data)))
+      (yt-dlp-download (cdr (assoc 'url song-data))
+                       (cdr (assoc 'outpath song-data)))
+      (let ((content (call-with-input-file
+                      (cdr (assoc 'filepath song-data))
+                      get-bytevector-all)))
+        (values (build-response
+                 #:headers `((content-type . (application/octet-stream))
+                             (content-disposition . (attachment
+                                                     (filename . ,(cdr (assoc 'filename song-data)))))))
+                content)))))
 
 (define (route-search-songs body)
   (values (build-response #:code 200)
@@ -61,14 +70,14 @@
     (cdr (assoc val json))))
 
 
-(define (yt-dlp-download id path)
+(define (yt-dlp-download yt-url path)
   (run-command (command-append
                 "yt-dlp"
                 "-x"
                 "--extract-audio"
                 "-o"
                 path
-                id)))
+                yt-url)))
 
 
 (define (yt-dlp-search query)
