@@ -19,7 +19,7 @@ RUN git clone https://github.com/aconchillo/guile-json /tmp/json
 RUN mkdir -p /usr/local/share/guile/site/3.0/
 
 RUN cd /tmp/fibers && ./autogen.sh && ./configure && make && make install
-RUN cd /tmp/json && ./autogen.sh && ./configure && make && make install
+RUN cd /tmp/json && autoreconf -vif && ./configure && make && make install
 
 # run the application
 WORKDIR /var/www/music-player
