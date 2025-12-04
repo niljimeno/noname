@@ -1,7 +1,7 @@
 (add-to-load-path "/usr/local/share/guile/site/3.0/")
-;; (add-to-load-path "/usr/local/share/guile/site/3.0/fibers/")
 
-(use-modules (web request)
+(use-modules (json)
+             (web request)
              (web response)
              (web uri)
              (ice-9 binary-ports)
@@ -9,6 +9,7 @@
              (ice-9 i18n)
              (fibers)
              (fibers web server)
+             (rnrs bytevectors)
              (srfi srfi-1))
 
 (load "shell.scm")
@@ -19,18 +20,20 @@
     (let ((main-section (first (url-sections url))))
     (cond
      ((equal? main-section "song")
-      (route-download-song request))
+      (route-download-song body))
      ((equal? main-section "search")
-      (route-search-songs request))))))
+      (route-search-songs body))))))
 
-(define (route-download-song request)
-  (let* ((id (get-param request "url"))
+
+(define (route-download-song body)
+  (let* ((id (get-json-value "id" body))
+         (filename (string-append id ".opus"))
+         (path (string-append "target/" id))
          (yt-url (string-append
                   "https://www.youtube.com/watch?v="
-                  id))
-         (filename (string-append id ".opus"))
-         (path (string-append "target/" id)))
+                  id)))
     (yt-dlp-download yt-url path)
+
     (let ((content (call-with-input-file
                     (string-append "target/" filename)
                     get-bytevector-all)))
@@ -39,35 +42,28 @@
                            (content-disposition . (attachment (filename . ,filename)))))
               content))))
 
-(define (route-search-songs request)
+(define (route-search-songs body)
   (values (build-response #:code 200)
-          (yt-dlp-search (get-param request "q"))))
+          (yt-dlp-search (get-json-value "query" body))))
 
 
 (define (url-sections url)
   (drop (string-split url #\/) 1))
 
-(define (get-param request param)
-  (let ((params (uri-query (request-uri request))))
-    (and params
-         (let ((pairs (string-split params #\&)))
-           (let loop ((pairs pairs))
-             (or (null? pairs)
-                 (let* ((pair (car pairs))
-                        (kv (string-split pair #\=)))
-                   (if (string=? (car kv) param)
-                       (cadr kv)
-                       (loop (cdr pairs))))))))))
+
+(define (get-json-value val body)
+  (let ((json (json-string->scm (utf8->string body))))
+    (cdr (assoc val json))))
 
 
-(define (yt-dlp-download url path)
+(define (yt-dlp-download id path)
   (run-command (command-append
                 "yt-dlp"
                 "-x"
                 "--extract-audio"
                 "-o"
                 path
-                url)))
+                id)))
 
 
 (define (yt-dlp-search query)
