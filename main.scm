@@ -22,7 +22,8 @@
      ((equal? main-section "song")
       (route-download-song body))
      ((equal? main-section "search")
-      (route-search-songs body))))))
+      (route-search-songs body))
+     (else (route-not-found))))))
 
 
 (define (route-download-song body)
@@ -45,6 +46,10 @@
 (define (route-search-songs body)
   (values (build-response #:code 200)
           (yt-dlp-search (get-json-value "query" body))))
+
+
+(define (route-not-found)
+  (values (build-response #:code 404) "not found"))
 
 
 (define (url-sections url)
