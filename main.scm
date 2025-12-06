@@ -40,7 +40,6 @@
 (define (route-download-song body)
   (let ((song-url (get-json-value "url" body)))
     (let ((song-data (get-song-data song-url)))
-      (clean-existing (cdr (assoc 'filepath song-data)))
       (yt-dlp-download (cdr (assoc 'url song-data))
                        (cdr (assoc 'outpath song-data)))
       (let ((content (call-with-input-file
