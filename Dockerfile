@@ -15,15 +15,27 @@ RUN chmod +x /usr/bin/yt-dlp
 # install guile dependencies
 RUN git clone https://codeberg.org/guile/fibers /tmp/fibers
 RUN git clone https://github.com/aconchillo/guile-json /tmp/json
+RUN git clone https://github.com/aconchillo/guile-dbi /tmp/dbi
 
 RUN mkdir -p /usr/local/share/guile/site/3.0/
+ENV LD_LIBRARY_PATH="/usr/local/lib"
+ENV PKG_CONFIG_PATH="/usr/local/lib/pkgconfig";
 
 RUN cd /tmp/fibers && ./autogen.sh && ./configure && make && make install
 RUN cd /tmp/json && autoreconf -vif && ./configure && make && make install
+
+RUN apk add gettext-dev sqlite-dev zlib-dev
+RUN cd /tmp/dbi/guile-dbi && ./autogen.sh && ./configure && make && make install
+RUN cd /tmp/dbi/guile-dbd-sqlite3 && ./autogen.sh --no-configure && ./configure && make && make install
 
 # run the application
 WORKDIR /var/www/music-player
 COPY ./ /var/www/music-player
 
 EXPOSE 8080
+
+# deploy to production
 CMD ["make", "run"]
+
+# deploy for database tests
+# CMD ["make", "test-db"]

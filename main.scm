@@ -14,6 +14,7 @@
 
 (load "shell.scm")
 (load "json.scm")
+(load "db.scm")
 
 (load "routes/song.scm")
 (load "routes/search.scm")
