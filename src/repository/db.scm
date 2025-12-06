@@ -1,6 +1,5 @@
 (use-modules (dbi dbi))
 
-
 (define db-obj (dbi-open "sqlite3" "db"))
 
 ;; Create a table.
